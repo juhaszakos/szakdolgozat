@@ -1,5 +1,5 @@
 import time
-
+# please install manually these dependencies below
 import cv2
 import numpy as np
 from djitellopy import tello
@@ -13,8 +13,8 @@ prewErrorBFmax = 0 # az előző maximális hiba az előre hátra mozugáshoz
 #prewErrorBF = 0 # az előző hiba az előre és hátra repüléshez
 fbRange = [6000,8000]   # ez lesz az az intervallum, amiben elfogadjuk a az arcterület nagyságát, ha ettől nagyobb, vagy
                         # kisebb, akkor előre vagy hátra mozgunk
-pid = [0.4,0.4,0] #propocionális, integrál, derivál
-pid2 = [0.01,0.01,0]
+pid = [0.4,0,0.4] #propocionális, integrál, derivál
+pid2 = [0.01,0,0.01]
 
 
 # a tello objektum példánya
@@ -28,7 +28,7 @@ drone.send_rc_control(0,0,25,0)
 time.sleep(1)
 
 
-#capture = cv2.VideoCapture(0) #a számítógép webkamerájáról vesszük most a folyamatos frameket
+capture = cv2.VideoCapture(0) #a számítógép webkamerájáról vesszük most a folyamatos frameket # test with camera 1/2.
 
 
 """
@@ -109,12 +109,12 @@ def trackFace(drone, imgInfo, width,height, pidRotation, pidFB, prewErrorRotate,
     errorFBmin = 0
 
     # a különböző mozgási irányok sebességének  beállítása/inicalizálása
-    speedOfRotation = pidRotation[0] * errorRotate + pidRotation[1] * (errorRotate - prewErrorRotate) #a  sebességet a pid segítségével számoljuk.
+    speedOfRotation = pidRotation[0] * errorRotate + pidRotation[2] * (errorRotate - prewErrorRotate) #a  sebességet a pid segítségével számoljuk.
                                                                             # a derivált tnem használjuk
 
     speedOfRotation = int(np.clip(speedOfRotation,-100,100)) # a sebesség -100 és 100 közé essen csak
 
-    speedOfUD = pidRotation[0] * errorUD + pidRotation[1] * (errorUD - prewErrorUD) #a  sebességet a pid segítségével számoljuk.
+    speedOfUD = pidRotation[0] * errorUD + pidRotation[2] * (errorUD - prewErrorUD) #a  sebességet a pid segítségével számoljuk.
                                                                             # a derivált tnem használjuk
     speedOfUD = int(np.clip(speedOfUD,-100,100))
 
@@ -124,11 +124,11 @@ def trackFace(drone, imgInfo, width,height, pidRotation, pidFB, prewErrorRotate,
     # határa és kisebb, mint az iontervallum eflső határa
     if area < fbRange[0] and area != 0:
         errorFBmin = fbRange[0] - area
-        speedOfFB = pidFB[0] * errorFBmin + pidFB[1] * (errorFBmin - prewErrorFBmin)
+        speedOfFB = pidFB[0] * errorFBmin + pidFB[2] * (errorFBmin - prewErrorFBmin)
         errorFB = errorFBmin
     elif area > fbRange[1]:
         errorFBmax = fbRange[1] - area
-        speedOfFB = speedOfFB = pidFB[0] * errorFBmax + pidFB[1] * (errorFBmax - prewErrorFBmax)
+        speedOfFB = speedOfFB = pidFB[0] * errorFBmax + pidFB[2] * (errorFBmax - prewErrorFBmax)
         errorFB = errorFBmax
 
     speedOfFB = int(np.clip(speedOfFB,-20,20))
@@ -154,22 +154,23 @@ def trackFace(drone, imgInfo, width,height, pidRotation, pidFB, prewErrorRotate,
     drone.send_rc_control(0,speedOfFB,(speedOfUD)*(-1),speedOfRotation) # itt küldöm el a kiszámított írányítást a drónnak
     return (errorRotate,errorUD,errorFBmin,errorFBmax) # visszatérünk a hibákal
 
+if __name__ == '__main__':
 
-# itt vesszük le a folyamatos frameket
-while alive:
-    #_,img = capture.read()
-    img = drone.get_frame_read().frame
-    img = cv2.resize(img,(width,height))
-    img, imgInfo = findFace(img)
+    # itt vesszük le a folyamatos frameket
+    while alive:
+        #_,img = capture.read() # test with camera 2/2.
+        img = drone.get_frame_read().frame
+        img = cv2.resize(img,(width,height))
+        img, imgInfo = findFace(img)
 
-    prewErrorRotate, prewErrorUD,prewErrorBFmin, prewErrorBFmax = trackFace(drone, imgInfo, width, height, pid,pid2,
-                                                                           prewErrorRotate,
-                                                                           prewErrorUD, prewErrorBFmin, prewErrorBFmax)
+        prewErrorRotate, prewErrorUD,prewErrorBFmin, prewErrorBFmax = trackFace(drone, imgInfo, width, height, pid,pid2,
+                                                                               prewErrorRotate,
+                                                                               prewErrorUD, prewErrorBFmin, prewErrorBFmax)
 
 
-    cv2.imshow("Drone",img)
-    cv2.waitKey(1)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        drone.streamoff()
-        drone.land()
-        alive = False
+        cv2.imshow("Drone",img)
+        cv2.waitKey(1)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            drone.streamoff()
+            drone.land()
+            alive = False
