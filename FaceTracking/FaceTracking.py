@@ -28,7 +28,7 @@ drone.send_rc_control(0,0,25,0)
 time.sleep(1)
 
 
-capture = cv2.VideoCapture(0) #a számítógép webkamerájáról vesszük most a folyamatos frameket # test with camera 1/2.
+#capture = cv2.VideoCapture(0) #a számítógép webkamerájáról vesszük most a folyamatos frameket # test with camera 1/2.
 
 
 """
