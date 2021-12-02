@@ -110,18 +110,18 @@ def trackFace(drone, imgInfo, width,height, pidRotation, pidFB, prewErrorRotate,
 
     # a különböző mozgási irányok sebességének  beállítása/inicalizálása
     speedOfRotation = pidRotation[0] * errorRotate + pidRotation[2] * (errorRotate - prewErrorRotate) #a  sebességet a pid segítségével számoljuk.
-                                                                            # a derivált tnem használjuk
+                                                                            # az integrált nem használjuk
 
     speedOfRotation = int(np.clip(speedOfRotation,-100,100)) # a sebesség -100 és 100 közé essen csak
 
     speedOfUD = pidRotation[0] * errorUD + pidRotation[2] * (errorUD - prewErrorUD) #a  sebességet a pid segítségével számoljuk.
-                                                                            # a derivált tnem használjuk
+                                                                            # az integrált nem használjuk
     speedOfUD = int(np.clip(speedOfUD,-100,100))
 
     speedOfFB = 0
     # itt az elfogadási intervallum területébe esés ellenőrzése történik
     # egész addig nincs előer-hátra reptetés, amíg nagyobb a befoglaló négyzet tetülete, mint az intervallum alsó
-    # határa és kisebb, mint az iontervallum eflső határa
+    # határa és kisebb, mint az intervallum eflső határa
     if area < fbRange[0] and area != 0:
         errorFBmin = fbRange[0] - area
         speedOfFB = pidFB[0] * errorFBmin + pidFB[2] * (errorFBmin - prewErrorFBmin)
